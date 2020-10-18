@@ -2,9 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="b273d1ce-3676-409e-92b3-93f0117d655a" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/PA1/hw1.py" beforeDir="false" afterPath="$PROJECT_DIR$/PA1/hw1.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/PA1/.ipynb_checkpoints/Programming Assignment 1-checkpoint.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/PA1/.ipynb_checkpoints/Programming Assignment 1-checkpoint.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/PA1/Programming Assignment 1.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/PA1/Programming Assignment 1.ipynb" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -17,7 +16,7 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/PA1/hw1.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="193">
+            <state relative-caret-position="303">
               <caret line="19" column="20" selection-start-line="19" selection-start-column="20" selection-end-line="19" selection-end-column="20" />
               <folding>
                 <element signature="e#0#18#0" expanded="true" />
@@ -49,10 +48,10 @@
     </option>
   </component>
   <component name="ProjectFrameBounds" extendedState="6">
-    <option name="x" value="458" />
-    <option name="y" value="170" />
-    <option name="width" value="975" />
-    <option name="height" value="1100" />
+    <option name="x" value="-1928" />
+    <option name="y" value="-8" />
+    <option name="width" value="1936" />
+    <option name="height" value="1056" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectView">
@@ -67,6 +66,11 @@
             <path>
               <item name="CSE151B" type="b2602c69:ProjectViewProjectNode" />
               <item name="CSE151B" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="CSE151B" type="b2602c69:ProjectViewProjectNode" />
+              <item name="CSE151B" type="462c0819:PsiDirectoryNode" />
+              <item name="PA1" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
@@ -178,9 +182,9 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="-7" y="-7" width="1550" height="838" extended-state="6" />
+    <frame x="-1928" y="-8" width="1936" height="1056" extended-state="6" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.18824306" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.18809272" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
@@ -219,26 +223,11 @@
     </layout-to-restore>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/hw1.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="357">
-          <caret line="22" selection-start-line="22" selection-end-line="22" />
-          <folding>
-            <element signature="e#0#18#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/scratchpad.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="216">
-          <caret line="8" column="41" lean-forward="true" selection-start-line="8" selection-start-column="41" selection-end-line="8" selection-end-column="41" />
-        </state>
-      </provider>
-    </entry>
+    <entry file="file://$PROJECT_DIR$/hw1.py" />
+    <entry file="file://$PROJECT_DIR$/scratchpad.py" />
     <entry file="file://$PROJECT_DIR$/PA1/hw1.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="193">
+        <state relative-caret-position="303">
           <caret line="19" column="20" selection-start-line="19" selection-start-column="20" selection-end-line="19" selection-end-column="20" />
           <folding>
             <element signature="e#0#18#0" expanded="true" />
