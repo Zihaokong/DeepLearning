@@ -75,15 +75,17 @@ class Activation:
         Implement tanh here.
         """
         self.x = x
-        return 1.7159*np.tanh((2/3)*x)
+        return np.tanh(x)
 
     def ReLU(self, x):
         """
         Implement ReLU here.
         """
         self.x = x
-        result = x
-        result[x<0] = 0
+
+        result = np.array(x)
+        result[result<0] = 0
+
         return result
 
     def grad_sigmoid(self):
@@ -102,9 +104,9 @@ class Activation:
         """
         Compute the gradient for ReLU here.
         """
-        result = self.x
-        result[self.x<=0] = 0
-        result[self.x>0] = 1
+        result = np.array(self.x)
+        result[result<=0] = 0
+        result[result>0] = 1
         return result
 
 
@@ -123,8 +125,9 @@ class Layer:
         Define the architecture and create placeholder.
         """
         np.random.seed(42)
-        self.w = math.sqrt(2 / in_units) * np.random.randn(in_units,
-                                                           out_units)  # You can experiment with initialization.
+        self.w = np.array([[-1,1,-1],[1,2,-1],[-1,-2,-1]])
+        # self.w = math.sqrt(2 / in_units) * np.random.randn(in_units,
+        #                                                    out_units)  # You can experiment with initialization.
         self.b = np.zeros((1, out_units))  # Create a placeholder for Bias
         self.x = None  # Save the input to forward in this
         self.a = None  # Save the output of forward pass in this (without activation)
@@ -156,6 +159,7 @@ class Layer:
         Return self.dx
         """
         # partial aj/ partial wij is zi (x in this case) for gradient decent(- partial J / partial aj * partial aj / partial wij
+
         self.d_w = self.x
 
         # derivative of bias is 1
@@ -163,7 +167,7 @@ class Layer:
 
         # derivative of input (i column) is weighted sum of input of delta j and wj (row of weight matrix w, total i column)
         # delta is row major, change to column major first
-        self.d_x = self.w @ delta.T
+        self.d_x = (self.w @ delta.T).T
 
         # propogate partial X to calculate last layer's delta
         return self.d_x
@@ -209,25 +213,24 @@ class NeuralNetwork:
         self.x = x
         self.targets = targets
 
-        layer1 = self.layers[0]
-        act1 = self.layers[1]
-        layer2 = self.layers[2]
-
         # first weight sum of input, getting aj
-        aj = layer1.forward(self.x)
-
+        aj = self.layers[0].forward(self.x)
+        #print("output first layer",aj)
         #activate aj to zj
-        zj = act1.forward(aj)
+        zj = self.layers[1].forward(aj)
+        #print("after activation",zj)
 
         #weight sum of input, getting ak
-        ak = layer2.forward(zj)
+        ak = self.layers[2].forward(zj)
+
 
         #activate ak to yk
         self.y = self.softmax(ak)
-
+        #print("activation",self.y)
         # calculate loss if target is passed into the function
         if targets is not None:
             batch_loss = self.loss(self.y,self.targets)
+            print("batch loss", batch_loss)
             return self.y,batch_loss
         else:
             return self.y
@@ -253,16 +256,23 @@ class NeuralNetwork:
         Call backward methods of individual layer's.
         """
 
-        # haven't finish here
-        delta = self.targets - self.y
-        self.layers[2].backward(delta)
-        raise NotImplementedError("Backprop not implemented for NeuralNetwork")
+        deltak = self.targets - self.y
+        temp = self.layers[2].backward(deltak)
 
+        deltaj = self.layers[1].backward(temp)
+
+
+        self.layers[2].w = self.layers[2].w + 0.1*(self.layers[2].x.T) @ deltak
+        self.layers[0].w = self.layers[0].w + 0.1*(self.layers[0].x.T) @ deltaj
+        #print("back prop layer2 w",self.layers[2].w)
+
+        #print("back prop layer0 w",self.layers[0].w)
 
     def loss(self, logits, targets):
         """
         compute the categorical cross-entropy loss and return it.
         """
         y_ylog = targets * np.log(logits + 0.000000000001)
+        #print("loss function",y_ylog)
         return -1 * np.sum(y_ylog)
 
