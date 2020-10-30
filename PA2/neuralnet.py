@@ -63,6 +63,7 @@ class Activation:
         elif self.activation_type == "ReLU":
             grad = self.grad_ReLU()
 
+        #对位相乘
         return grad * delta
 
     def sigmoid(self, x):
@@ -81,26 +82,30 @@ class Activation:
         Implement ReLU here.
         """
         self.x = x
-        result = x[x < 0] = 0
+        result = x
+        result[x<0] = 0
         return result
 
     def grad_sigmoid(self):
         """
         Compute the gradient for sigmoid here.
         """
-        raise NotImplementedError("Sigmoid gradient not implemented")
+        return self.sigmoid(self.x)*(1-self.sigmoid(self.x))
 
     def grad_tanh(self):
         """
         Compute the gradient for tanh here.
         """
-        raise NotImplementedError("tanh gradient not implemented")
+        return 1-self.tanh(self.x)*self.tanh(self.x)
 
     def grad_ReLU(self):
         """
         Compute the gradient for ReLU here.
         """
-        raise NotImplementedError("ReLU gradient not implemented")
+        result = self.x
+        result[self.x<=0] = 0
+        result[self.x>0] = 1
+        return result
 
 
 class Layer:
@@ -124,9 +129,9 @@ class Layer:
         self.x = None  # Save the input to forward in this
         self.a = None  # Save the output of forward pass in this (without activation)
 
-        self.d_x = None  # Save the gradient w.r.t x in this
-        self.d_w = None  # Save the gradient w.r.t w in this
-        self.d_b = None  # Save the gradient w.r.t b in this
+        self.d_x = None  # Save the gradient w.r.t x in this // wjk
+        self.d_w = None  # Save the gradient w.r.t w in this // xj
+        self.d_b = None  # Save the gradient w.r.t b in this //
 
     def __call__(self, x):
         """
@@ -150,7 +155,11 @@ class Layer:
         computes gradient for its weights and the delta to pass to its previous layers.
         Return self.dx
         """
-        raise NotImplementedError("Backprop for Layer not implemented.")
+        self.d_w = self.x
+        self.d_b = np.ones((1,self.b.shape[1]))
+        self.d_x = self.w @ delta.T
+
+        return self.d_x
 
 
 class NeuralNetwork:
@@ -191,15 +200,14 @@ class NeuralNetwork:
         """
         self.x = x
         self.targets = targets
+
         layer1 = self.layers[0]
         act1 = self.layers[1]
         layer2 = self.layers[2]
+
         aj = layer1.forward(self.x)
-
         zj = act1.forward(aj)
-
         ak = layer2.forward(zj)
-
         self.y = self.softmax(ak)
 
         if targets is not None:
@@ -226,14 +234,15 @@ class NeuralNetwork:
         Implement backpropagation here.
         Call backward methods of individual layer's.
         """
+        delta = self.targets - self.y
+        self.layers[2].backward(delta)
         raise NotImplementedError("Backprop not implemented for NeuralNetwork")
 
 
-    def loss(self,logits, targets):
+    def loss(self, logits, targets):
         """
         compute the categorical cross-entropy loss and return it.
         """
         y_ylog = targets * np.log(logits + 0.000000000001)
         return -1 * np.sum(y_ylog)
-
 
