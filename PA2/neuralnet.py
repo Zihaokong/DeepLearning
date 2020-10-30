@@ -14,9 +14,9 @@ class Activation:
     your neural network layers.
 
     Example (for sigmoid):
-        >>> sigmoid_layer = Activation("sigmoid")
-        >>> z = sigmoid_layer(a)
-        >>> gradient = sigmoid_layer.backward(delta=1.0)
+        //>>> sigmoid_layer = Activation("sigmoid")
+        //>>> z = sigmoid_layer(a)
+        //>>> gradient = sigmoid_layer.backward(delta=1.0)
     """
 
     def __init__(self, activation_type="sigmoid"):
@@ -66,22 +66,23 @@ class Activation:
         return grad * delta
 
     def sigmoid(self, x):
-        """
-        Implement the sigmoid activation here.
-        """
-        raise NotImplementedError("Sigmoid not implemented")
+        self.x = x
+        return 1/(1+np.exp(-1*x))
 
     def tanh(self, x):
         """
         Implement tanh here.
         """
-        raise NotImplementedError("Tanh not implemented")
+        self.x = x
+        return 1.7159*np.tanh((2/3)*x)
 
     def ReLU(self, x):
         """
         Implement ReLU here.
         """
-        raise NotImplementedError("ReLu not implemented")
+        self.x = x
+        result = x[x < 0] = 0
+        return result
 
     def grad_sigmoid(self):
         """
@@ -107,9 +108,9 @@ class Layer:
     This class implements Fully Connected layers for your neural network.
 
     Example:
-        >>> fully_connected_layer = Layer(1024, 100)
-        >>> output = fully_connected_layer(input)
-        >>> gradient = fully_connected_layer.backward(delta=1.0)
+        //>>> fully_connected_layer = Layer(1024, 100)
+        //>>> output = fully_connected_layer(input)
+        //>>> gradient = fully_connected_layer.backward(delta=1.0)
     """
 
     def __init__(self, in_units, out_units):
@@ -139,7 +140,9 @@ class Layer:
         Do not apply activation here.
         Return self.a
         """
-        raise NotImplementedError("Layer forward pass not implemented.")
+        self.x = x
+        self.a = self.x @ self.w + self.b
+        return self.a
 
     def backward(self, delta):
         """
@@ -155,9 +158,9 @@ class NeuralNetwork:
     Create a Neural Network specified by the input configuration.
 
     Example:
-        >>> net = NeuralNetwork(config)
-        >>> output = net(input)
-        >>> net.backward()
+        //>>> net = NeuralNetwork(config)
+        //>>> output = net(input)
+        //>>> net.backward()
     """
 
     def __init__(self, config):
@@ -186,7 +189,37 @@ class NeuralNetwork:
         Compute forward pass through all the layers in the network and return it.
         If targets are provided, return loss as well.
         """
-        raise NotImplementedError("Forward not implemented for NeuralNetwork")
+        self.x = x
+        self.targets = targets
+        layer1 = self.layers[0]
+        act1 = self.layers[1]
+        layer2 = self.layers[2]
+        aj = layer1.forward(self.x)
+
+        zj = act1.forward(aj)
+
+        ak = layer2.forward(zj)
+
+        self.y = self.softmax(ak)
+
+        if targets is not None:
+            batch_loss = self.loss(self.y,self.targets)
+            return self.y,batch_loss
+        else:
+            return self.y
+
+
+    def softmax(self, x):
+        """
+        Implement the softmax function here.
+        Remember to take care of the overflow condition.
+        """
+        row_max = np.amax(x, axis=1)
+
+        # prevent from value getting too big, substract every row by max.
+        x = x - row_max.reshape(x.shape[0], 1)
+        ex = np.exp(x)
+        return np.exp(x) / np.sum(np.exp(x), axis=1).reshape(-1, 1)
 
     def backward(self):
         """
@@ -195,15 +228,12 @@ class NeuralNetwork:
         """
         raise NotImplementedError("Backprop not implemented for NeuralNetwork")
 
-    def softmax(self, x):
-        """
-        Implement the softmax function here.
-        Remember to take care of the overflow condition.
-        """
-        raise NotImplementedError("Softmax not implemented")
 
-    def loss(self, logits, targets):
+    def loss(self,logits, targets):
         """
         compute the categorical cross-entropy loss and return it.
         """
-        raise NotImplementedError("Loss not implemented for NeuralNetwork")
+        y_ylog = targets * np.log(logits + 0.000000000001)
+        return -1 * np.sum(y_ylog)
+
+

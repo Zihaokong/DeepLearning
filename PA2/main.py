@@ -33,6 +33,7 @@ if __name__ == "__main__":
     [y_train, y_val] = np.split(y_train, [num])
     y_train = y_train.reshape(-1,1)
     y_val = y_val.reshape(-1, 1)
+    print(y_train)
 
     # Any pre-processing on the datasets goes here.
 
