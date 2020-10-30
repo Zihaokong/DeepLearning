@@ -63,7 +63,7 @@ class Activation:
         elif self.activation_type == "ReLU":
             grad = self.grad_ReLU()
 
-        #对位相乘
+        #dui wei xiang cheng, delta is from layer.backward, times gradient of activation function to get delta hidden layer
         return grad * delta
 
     def sigmoid(self, x):
@@ -155,10 +155,17 @@ class Layer:
         computes gradient for its weights and the delta to pass to its previous layers.
         Return self.dx
         """
+        # partial aj/ partial wij is zi (x in this case) for gradient decent(- partial J / partial aj * partial aj / partial wij
         self.d_w = self.x
+
+        # derivative of bias is 1
         self.d_b = np.ones((1,self.b.shape[1]))
+
+        # derivative of input (i column) is weighted sum of input of delta j and wj (row of weight matrix w, total i column)
+        # delta is row major, change to column major first
         self.d_x = self.w @ delta.T
 
+        # propogate partial X to calculate last layer's delta
         return self.d_x
 
 
@@ -198,6 +205,7 @@ class NeuralNetwork:
         Compute forward pass through all the layers in the network and return it.
         If targets are provided, return loss as well.
         """
+        # save input, save label
         self.x = x
         self.targets = targets
 
@@ -205,11 +213,19 @@ class NeuralNetwork:
         act1 = self.layers[1]
         layer2 = self.layers[2]
 
+        # first weight sum of input, getting aj
         aj = layer1.forward(self.x)
+
+        #activate aj to zj
         zj = act1.forward(aj)
+
+        #weight sum of input, getting ak
         ak = layer2.forward(zj)
+
+        #activate ak to yk
         self.y = self.softmax(ak)
 
+        # calculate loss if target is passed into the function
         if targets is not None:
             batch_loss = self.loss(self.y,self.targets)
             return self.y,batch_loss
@@ -222,10 +238,12 @@ class NeuralNetwork:
         Implement the softmax function here.
         Remember to take care of the overflow condition.
         """
-        row_max = np.amax(x, axis=1)
 
         # prevent from value getting too big, substract every row by max.
+        row_max = np.amax(x, axis=1)
         x = x - row_max.reshape(x.shape[0], 1)
+
+        # softmax equation
         ex = np.exp(x)
         return np.exp(x) / np.sum(np.exp(x), axis=1).reshape(-1, 1)
 
@@ -234,6 +252,8 @@ class NeuralNetwork:
         Implement backpropagation here.
         Call backward methods of individual layer's.
         """
+
+        # haven't finish here
         delta = self.targets - self.y
         self.layers[2].backward(delta)
         raise NotImplementedError("Backprop not implemented for NeuralNetwork")
