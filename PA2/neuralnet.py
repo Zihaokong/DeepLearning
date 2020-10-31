@@ -14,9 +14,9 @@ class Activation:
     your neural network layers.
 
     Example (for sigmoid):
-        >>> sigmoid_layer = Activation("sigmoid")
-        >>> z = sigmoid_layer(a)
-        >>> gradient = sigmoid_layer.backward(delta=1.0)
+        //>>> sigmoid_layer = Activation("sigmoid")
+        //>>> z = sigmoid_layer(a)
+        //>>> gradient = sigmoid_layer.backward(delta=1.0)
     """
 
     def __init__(self, activation_type="sigmoid"):
@@ -63,43 +63,51 @@ class Activation:
         elif self.activation_type == "ReLU":
             grad = self.grad_ReLU()
 
+        #dui wei xiang cheng, delta is from layer.backward, times gradient of activation function to get delta hidden layer
         return grad * delta
 
     def sigmoid(self, x):
-        """
-        Implement the sigmoid activation here.
-        """
-        raise NotImplementedError("Sigmoid not implemented")
+        self.x = x
+        return 1/(1+np.exp(-1*x))
 
     def tanh(self, x):
         """
         Implement tanh here.
         """
-        raise NotImplementedError("Tanh not implemented")
+        self.x = x
+        return np.tanh(x)
 
     def ReLU(self, x):
         """
         Implement ReLU here.
         """
-        raise NotImplementedError("ReLu not implemented")
+        self.x = x
+
+        result = np.array(x)
+        result[result<0] = 0
+
+        return result
 
     def grad_sigmoid(self):
         """
         Compute the gradient for sigmoid here.
         """
-        raise NotImplementedError("Sigmoid gradient not implemented")
+        return self.sigmoid(self.x)*(1-self.sigmoid(self.x))
 
     def grad_tanh(self):
         """
         Compute the gradient for tanh here.
         """
-        raise NotImplementedError("tanh gradient not implemented")
+        return 1-self.tanh(self.x)*self.tanh(self.x)
 
     def grad_ReLU(self):
         """
         Compute the gradient for ReLU here.
         """
-        raise NotImplementedError("ReLU gradient not implemented")
+        result = np.array(self.x)
+        result[result<=0] = 0
+        result[result>0] = 1
+        return result
 
 
 class Layer:
@@ -107,9 +115,9 @@ class Layer:
     This class implements Fully Connected layers for your neural network.
 
     Example:
-        >>> fully_connected_layer = Layer(1024, 100)
-        >>> output = fully_connected_layer(input)
-        >>> gradient = fully_connected_layer.backward(delta=1.0)
+        //>>> fully_connected_layer = Layer(1024, 100)
+        //>>> output = fully_connected_layer(input)
+        //>>> gradient = fully_connected_layer.backward(delta=1.0)
     """
 
     def __init__(self, in_units, out_units):
@@ -117,15 +125,16 @@ class Layer:
         Define the architecture and create placeholder.
         """
         np.random.seed(42)
-        self.w = math.sqrt(2 / in_units) * np.random.randn(in_units,
-                                                           out_units)  # You can experiment with initialization.
+        self.w = np.array([[-1,1,-1],[1,2,-1],[-1,-2,-1]])
+        # self.w = math.sqrt(2 / in_units) * np.random.randn(in_units,
+        #                                                    out_units)  # You can experiment with initialization.
         self.b = np.zeros((1, out_units))  # Create a placeholder for Bias
         self.x = None  # Save the input to forward in this
         self.a = None  # Save the output of forward pass in this (without activation)
 
-        self.d_x = None  # Save the gradient w.r.t x in this
-        self.d_w = None  # Save the gradient w.r.t w in this
-        self.d_b = None  # Save the gradient w.r.t b in this
+        self.d_x = None  # Save the gradient w.r.t x in this // wjk
+        self.d_w = None  # Save the gradient w.r.t w in this // xj
+        self.d_b = None  # Save the gradient w.r.t b in this //
 
     def __call__(self, x):
         """
@@ -139,7 +148,9 @@ class Layer:
         Do not apply activation here.
         Return self.a
         """
-        raise NotImplementedError("Layer forward pass not implemented.")
+        self.x = x
+        self.a = self.x @ self.w + self.b
+        return self.a
 
     def backward(self, delta):
         """
@@ -147,7 +158,19 @@ class Layer:
         computes gradient for its weights and the delta to pass to its previous layers.
         Return self.dx
         """
-        raise NotImplementedError("Backprop for Layer not implemented.")
+        # partial aj/ partial wij is zi (x in this case) for gradient decent(- partial J / partial aj * partial aj / partial wij
+
+        self.d_w = self.x
+
+        # derivative of bias is 1
+        self.d_b = np.ones((1,self.b.shape[1]))
+
+        # derivative of input (i column) is weighted sum of input of delta j and wj (row of weight matrix w, total i column)
+        # delta is row major, change to column major first
+        self.d_x = (self.w @ delta.T).T
+
+        # propogate partial X to calculate last layer's delta
+        return self.d_x
 
 
 class NeuralNetwork:
@@ -155,9 +178,9 @@ class NeuralNetwork:
     Create a Neural Network specified by the input configuration.
 
     Example:
-        >>> net = NeuralNetwork(config)
-        >>> output = net(input)
-        >>> net.backward()
+        //>>> net = NeuralNetwork(config)
+        //>>> output = net(input)
+        //>>> net.backward()
     """
 
     def __init__(self, config):
@@ -186,24 +209,70 @@ class NeuralNetwork:
         Compute forward pass through all the layers in the network and return it.
         If targets are provided, return loss as well.
         """
-        raise NotImplementedError("Forward not implemented for NeuralNetwork")
+        # save input, save label
+        self.x = x
+        self.targets = targets
 
-    def backward(self):
-        """
-        Implement backpropagation here.
-        Call backward methods of individual layer's.
-        """
-        raise NotImplementedError("Backprop not implemented for NeuralNetwork")
+        # first weight sum of input, getting aj
+        aj = self.layers[0].forward(self.x)
+        #print("output first layer",aj)
+        #activate aj to zj
+        zj = self.layers[1].forward(aj)
+        #print("after activation",zj)
+
+        #weight sum of input, getting ak
+        ak = self.layers[2].forward(zj)
+
+
+        #activate ak to yk
+        self.y = self.softmax(ak)
+        #print("activation",self.y)
+        # calculate loss if target is passed into the function
+        if targets is not None:
+            batch_loss = self.loss(self.y,self.targets)
+            print("batch loss", batch_loss)
+            return self.y,batch_loss
+        else:
+            return self.y
+
 
     def softmax(self, x):
         """
         Implement the softmax function here.
         Remember to take care of the overflow condition.
         """
-        raise NotImplementedError("Softmax not implemented")
+
+        # prevent from value getting too big, substract every row by max.
+        row_max = np.amax(x, axis=1)
+        x = x - row_max.reshape(x.shape[0], 1)
+
+        # softmax equation
+        ex = np.exp(x)
+        return np.exp(x) / np.sum(np.exp(x), axis=1).reshape(-1, 1)
+
+    def backward(self):
+        """
+        Implement backpropagation here.
+        Call backward methods of individual layer's.
+        """
+
+        deltak = self.targets - self.y
+        temp = self.layers[2].backward(deltak)
+
+        deltaj = self.layers[1].backward(temp)
+
+
+        self.layers[2].w = self.layers[2].w + 0.1*(self.layers[2].x.T) @ deltak
+        self.layers[0].w = self.layers[0].w + 0.1*(self.layers[0].x.T) @ deltaj
+        #print("back prop layer2 w",self.layers[2].w)
+
+        #print("back prop layer0 w",self.layers[0].w)
 
     def loss(self, logits, targets):
         """
         compute the categorical cross-entropy loss and return it.
         """
-        raise NotImplementedError("Loss not implemented for NeuralNetwork")
+        y_ylog = targets * np.log(logits + 0.000000000001)
+        #print("loss function",y_ylog)
+        return -1 * np.sum(y_ylog)
+
