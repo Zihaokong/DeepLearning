@@ -1,12 +1,12 @@
 ################################################################################
-# CSE 253: Programming Assignment 2
+# CSE 151B: Programming Assignment 2
 # Code snippet by Ajit Kumar, Savyasachi
+# Edited by Zihao Kong, Baichuan Wu
 # Fall 2020
 ################################################################################
 
 import numpy as np
 import math
-
 
 class Activation:
     """
@@ -63,51 +63,55 @@ class Activation:
         elif self.activation_type == "ReLU":
             grad = self.grad_ReLU()
 
-        #dui wei xiang cheng, delta is from layer.backward, times gradient of activation function to get delta hidden layer
+        # Hadamard product
         return grad * delta
 
     def sigmoid(self, x):
+        """
+        Sigmoid activation function.
+        """
         self.x = x
-        return 1/(1+np.exp(-1*x))
+        if x >= 0:
+            return 1 / (1 + exp(-x))
+        else:
+            return exp(x) / (1 + exp(x))
 
     def tanh(self, x):
         """
-        Implement tanh here.
+        Tanh activation function.
         """
         self.x = x
         return np.tanh(x)
 
     def ReLU(self, x):
         """
-        Implement ReLU here.
+        ReLU activation function.
         """
         self.x = x
-
-        result = np.array(x)
-        result[result<0] = 0
-
-        return result
+        res = np.array(self.x)
+        res[res < 0] = 0
+        return res
 
     def grad_sigmoid(self):
         """
-        Compute the gradient for sigmoid here.
+        Calculates Gradient of sigmoid activation function.
         """
-        return self.sigmoid(self.x)*(1-self.sigmoid(self.x))
+        return self.sigmoid(self.x) * (1 - self.sigmoid(self.x))
 
     def grad_tanh(self):
         """
-        Compute the gradient for tanh here.
+        Calculates Gradient of tanh activation function.
         """
-        return 1-self.tanh(self.x)*self.tanh(self.x)
+        return 1 - self.tanh(self.x) ** 2
 
     def grad_ReLU(self):
         """
-        Compute the gradient for ReLU here.
+        Calculates Gradient of ReLU activation function.
         """
-        result = np.array(self.x)
-        result[result<=0] = 0
-        result[result>0] = 1
-        return result
+        res = np.array(self.x)
+        res[res <= 0] = 0
+        res[res > 0] = 1
+        return res
 
 
 class Layer:
@@ -125,16 +129,14 @@ class Layer:
         Define the architecture and create placeholder.
         """
         np.random.seed(42)
-        self.w = np.array([[-1,1,-1],[1,2,-1],[-1,-2,-1]])
-        # self.w = math.sqrt(2 / in_units) * np.random.randn(in_units,
-        #                                                    out_units)  # You can experiment with initialization.
+        self.w = math.sqrt(2 / in_units) * np.random.randn(in_units, out_units) # Kaiming initialization
         self.b = np.zeros((1, out_units))  # Create a placeholder for Bias
         self.x = None  # Save the input to forward in this
         self.a = None  # Save the output of forward pass in this (without activation)
 
-        self.d_x = None  # Save the gradient w.r.t x in this // wjk
-        self.d_w = None  # Save the gradient w.r.t w in this // xj
-        self.d_b = None  # Save the gradient w.r.t b in this //
+        self.d_x = None  # Save the gradient w.r.t x in this w_{jk}
+        self.d_w = None  # Save the gradient w.r.t w in this x_j
+        self.d_b = None  # Save the gradient w.r.t b in this
 
     def __call__(self, x):
         """
@@ -158,14 +160,14 @@ class Layer:
         computes gradient for its weights and the delta to pass to its previous layers.
         Return self.dx
         """
-        # partial aj/ partial wij is zi (x in this case) for gradient decent(- partial J / partial aj * partial aj / partial wij
-
+        # \frac{\partial a_j}{\partial w_{ij}} = x, 
+        # where the gradient is - \frac{\partial E}{\partial a_j} \frac{a_j}{\partial w_{ij}}
         self.d_w = self.x
 
         # derivative of bias is 1
-        self.d_b = np.ones((1,self.b.shape[1]))
+        self.d_b = np.ones((1, len(self.b)))
 
-        # derivative of input (i column) is weighted sum of input of delta j and wj (row of weight matrix w, total i column)
+        # derivative of input is the weighted sum of input of delta j and w_j
         # delta is row major, change to column major first
         self.d_x = (self.w @ delta.T).T
 
@@ -191,6 +193,7 @@ class NeuralNetwork:
         self.x = None  # Save the input to forward in this
         self.y = None  # Save the output vector of model in this
         self.targets = None  # Save the targets in forward in this variable
+        self.alpha = config['learning_rate'] # Save the learning rate from config
 
         # Add layers specified by layer_specs.
         for i in range(len(config['layer_specs']) - 1):
@@ -202,6 +205,8 @@ class NeuralNetwork:
         """
         Make NeuralNetwork callable.
         """
+        self.x = x
+        self.target = target
         return self.forward(x, targets)
 
     def forward(self, x, targets=None):
@@ -209,45 +214,32 @@ class NeuralNetwork:
         Compute forward pass through all the layers in the network and return it.
         If targets are provided, return loss as well.
         """
-        # save input, save label
-        self.x = x
-        self.targets = targets
 
-        # first weight sum of input, getting aj
-        aj = self.layers[0].forward(self.x)
-        #print("output first layer",aj)
-        #activate aj to zj
-        zj = self.layers[1].forward(aj)
-        #print("after activation",zj)
-
-        #weight sum of input, getting ak
-        ak = self.layers[2].forward(zj)
-
+        """
+        Flawed, needs update
+        """
+        for i in range(len(self.layers)):
+            # Calculate weighted sum of inputs / pass weighted sum through activation
+            self.x = self.layers[i].forward(self.x)
 
         #activate ak to yk
-        self.y = self.softmax(ak)
-        #print("activation",self.y)
+        self.y = self.softmax(self.x)
+
         # calculate loss if target is passed into the function
         if targets is not None:
-            batch_loss = self.loss(self.y,self.targets)
-            print("batch loss", batch_loss)
-            return self.y,batch_loss
+            batch_loss = self.loss(self.y, self.targets)
+            return self.y, batch_loss
         else:
             return self.y
 
 
     def softmax(self, x):
         """
-        Implement the softmax function here.
-        Remember to take care of the overflow condition.
+        Numerically stable softmax function
         """
-
-        # prevent from value getting too big, substract every row by max.
         row_max = np.amax(x, axis=1)
-        x = x - row_max.reshape(x.shape[0], 1)
+        x = x - row_max.reshape(len(x), 1)
 
-        # softmax equation
-        ex = np.exp(x)
         return np.exp(x) / np.sum(np.exp(x), axis=1).reshape(-1, 1)
 
     def backward(self):
@@ -255,24 +247,21 @@ class NeuralNetwork:
         Implement backpropagation here.
         Call backward methods of individual layer's.
         """
+        self.delta = np.append(np.zeros(len(self.layers) - 1), self.targets - self.y)
 
-        deltak = self.targets - self.y
-        temp = self.layers[2].backward(deltak)
-
-        deltaj = self.layers[1].backward(temp)
-
-
-        self.layers[2].w = self.layers[2].w + 0.1*(self.layers[2].x.T) @ deltak
-        self.layers[0].w = self.layers[0].w + 0.1*(self.layers[0].x.T) @ deltaj
-        #print("back prop layer2 w",self.layers[2].w)
-
-        #print("back prop layer0 w",self.layers[0].w)
+        # Backprop deltas
+        for i in reversed(range(len(self.layers) - 1)):
+            # Evaluate the delta term
+            self.delta[i] = self.layers[i].backward[self.delta[i + 1]]
+        
+        # Update weights
+        for i in range(0, len(self.layers), 2):
+            self.layers[i].w = self.layers[i].w + self.alpha * self.layers[i].x.T @ self.delta[i]
 
     def loss(self, logits, targets):
         """
         compute the categorical cross-entropy loss and return it.
         """
-        y_ylog = targets * np.log(logits + 0.000000000001)
-        #print("loss function",y_ylog)
+        y_ylog = targets * np.log(logits + 1e-8)
         return -1 * np.sum(y_ylog)
 
