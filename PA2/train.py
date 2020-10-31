@@ -25,12 +25,14 @@ def train(x_train, y_train, x_valid, y_valid, config):
     model = NeuralNetwork(config=config)
 
     # return train_acc, valid_acc, train_loss, valid_loss, best_model
-    raise NotImplementedError("Train method not implemented")
+    return train_acc, valid_Acc, train_loss, valid_loss, best_model
 
 
 def test(model, x_test, y_test):
     """
     Does a forward pass on the model and return loss and accuracy on the test set.
     """
+    y, loss = model.forward(x_test, y_test)
+    accuracy = 0
     # return loss, accuracy
-    raise NotImplementedError("Test method not implemented")
+    return loss, accuracy
