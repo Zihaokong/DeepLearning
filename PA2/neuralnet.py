@@ -194,6 +194,7 @@ class NeuralNetwork:
         self.y = None  # Save the output vector of model in this
         self.targets = None  # Save the targets in forward in this variable
         self.alpha = config['learning_rate'] # Save the learning rate from config
+        self.batch_size = config['batch_size'] #
 
         # Add layers specified by layer_specs.
         for i in range(len(config['layer_specs']) - 1):
@@ -215,12 +216,14 @@ class NeuralNetwork:
         self.x = x
         self.targets = targets
         
+        temp = self.x
+        
         for i in range(len(self.layers)):
             # Calculate weighted sum of inputs / pass weighted sum through activation
-            self.x = self.layers[i].forward(self.x)
+            temp = self.layers[i].forward(temp)
 
-        #activate ak to yk
-        self.y = self.softmax(self.x)
+        # activate ak to yk
+        self.y = self.softmax(temp)
 
         # calculate loss if target is passed into the function
         if targets is not None:
@@ -244,21 +247,26 @@ class NeuralNetwork:
         Implement backpropagation here.
         Call backward methods of individual layer's.
         """
-        self.delta = np.append(np.zeros(len(self.layers) - 1), self.targets - self.y)
+        delta = [None] * len(self.layers)
+        delta[len(delta) - 1] = self.targets - self.y
 
         # Backprop deltas
         for i in reversed(range(len(self.layers) - 1)):
             # Evaluate the delta term
-            self.delta[i] = self.layers[i].backward[self.delta[i + 1]]
+            delta[i] = self.layers[i + 1].backward(delta[i + 1])
         
         # Update weights
         for i in range(0, len(self.layers), 2):
-            self.layers[i].w = self.layers[i].w + self.alpha * self.layers[i].x.T @ self.delta[i]
+            # w = [fan_in, fan_out] => x = [n, fan_in], delta = [n, fan_out], alpha = [1] => x.T @ delta * alpha
+            self.layers[i].w = self.layers[i].w + self.alpha * (self.layers[i].x.T @ delta[i]) / self.batch_size
+            # a = w_0 * b + w_1 * x1 ...
+            # b = [n, fan_out] => delta = [n, fan_out]
+            self.layers[i].b = self.layers[i].b + self.alpha * np.mean(delta[i], axis=0)
 
     def loss(self, logits, targets):
         """
         compute the categorical cross-entropy loss and return it.
         """
         y_ylog = targets * np.log(logits + 1e-8)
-        return -1 * np.sum(y_ylog)
+        return -1 * np.sum(y_ylog) / len(targets)
 
