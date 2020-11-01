@@ -205,8 +205,6 @@ class NeuralNetwork:
         """
         Make NeuralNetwork callable.
         """
-        self.x = x
-        self.target = target
         return self.forward(x, targets)
 
     def forward(self, x, targets=None):
@@ -214,10 +212,9 @@ class NeuralNetwork:
         Compute forward pass through all the layers in the network and return it.
         If targets are provided, return loss as well.
         """
-
-        """
-        Flawed, needs update
-        """
+        self.x = x
+        self.targets = targets
+        
         for i in range(len(self.layers)):
             # Calculate weighted sum of inputs / pass weighted sum through activation
             self.x = self.layers[i].forward(self.x)
