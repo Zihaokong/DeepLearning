@@ -162,10 +162,10 @@ class Layer:
         """
         # \frac{\partial a_j}{\partial w_{ij}} = x, 
         # where the gradient is - \frac{\partial E}{\partial a_j} \frac{a_j}{\partial w_{ij}}
-        self.d_w = self.x
+        self.d_w = -1 * (self.x.T @ delta)
 
         # derivative of bias is 1
-        self.d_b = np.ones((1, len(self.b)))
+        self.d_b = np.ones((1, len(self.x))) @ delta
 
         # derivative of input is the weighted sum of input of delta j and w_j
         # delta is row major, change to column major first
