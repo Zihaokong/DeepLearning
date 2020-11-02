@@ -1,8 +1,8 @@
 # This specifies the number of layers and number of hidden neurons in each layer.
-layer_specs: [1024, 128, 10]
+layer_specs: [1024, 128,20, 10]
 
 # Type of non-linear activation function to be used for the layers.
-activation: "tanh"
+activation: "ReLU"
 
 # The learning rate to be used for training.
 learning_rate: 0.05
@@ -17,7 +17,7 @@ epochs: 100
 early_stop: True
 
 # History for early stopping. Wait for this many epochs to check validation loss / accuracy.
-early_stop_epoch: 30
+early_stop_epoch: 15
 
 # Regularization constant
 L2_penalty: 0.0001

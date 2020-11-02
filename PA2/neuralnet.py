@@ -50,7 +50,7 @@ class Activation:
         elif self.activation_type == "ReLU":
             return self.ReLU(a)
 
-    def backward(self, delta):
+    def backward(self, delta,gamma):
         """
         Compute the backward pass.
         """
@@ -71,10 +71,10 @@ class Activation:
         Sigmoid activation function.
         """
         self.x = x
-        if x >= 0:
-            return 1 / (1 + exp(-x))
+        if x.all() >= 0:
+            return 1 / (1 + np.exp(-x))
         else:
-            return exp(x) / (1 + exp(x))
+            return np.exp(x) / (1 + np.exp(x))
 
     def tanh(self, x):
         """
@@ -138,6 +138,9 @@ class Layer:
         self.d_w = None  # Save the gradient w.r.t w in this x_j
         self.d_b = None  # Save the gradient w.r.t b in this
 
+        self.oldd_w = np.zeros((in_units,out_units))
+        self.oldd_b = np.zeros((1,out_units))
+
     def __call__(self, x):
         """
         Make layer callable.
@@ -154,7 +157,7 @@ class Layer:
         self.a = self.x @ self.w + self.b
         return self.a
 
-    def backward(self, delta):
+    def backward(self, delta,gamma):
         """
         Write the code for backward pass. This takes in gradient from its next layer as input,
         computes gradient for its weights and the delta to pass to its previous layers.
@@ -162,11 +165,11 @@ class Layer:
         """
         # \frac{\partial a_j}{\partial w_{ij}} = x, 
         # where the gradient is - \frac{\partial E}{\partial a_j} \frac{a_j}{\partial w_{ij}}
-        self.d_w = -1 * (self.x.T @ delta)
-
+        self.d_w = gamma*(-1 * (self.x.T @ delta)) + (1-gamma)*self.oldd_w
+        self.oldd_w = self.d_w
         # derivative of bias
-        self.d_b = -1 * np.ones((1, len(self.x))) @ delta
-
+        self.d_b = gamma*(-1 * np.ones((1, len(self.x))) @ delta) + (1-gamma)*self.oldd_b
+        self.oldd_b = self.d_b
         # derivative of input is the weighted sum of input of delta j and w_j
         self.d_x = (self.w @ delta.T).T
 
@@ -194,7 +197,11 @@ class NeuralNetwork:
         self.targets = None  # Save the targets in forward in this variable
         self.alpha = config['learning_rate'] # Save the learning rate from config
         self.batch_size = config['batch_size'] # Save the batch size from config
-
+        self.L2_penalty = config['L2_penalty']
+        if config['momentum'] == True:
+            self.gamma = config['momentum_gamma']
+        else:
+            self.gamma = 1
         # Add layers specified by layer_specs.
         for i in range(len(config['layer_specs']) - 1):
             self.layers.append(Layer(config['layer_specs'][i], config['layer_specs'][i + 1]))
@@ -252,17 +259,17 @@ class NeuralNetwork:
         # Backprop deltas
         for i in reversed(range(len(self.layers) - 1)):
             # Evaluate the delta term
-            delta[i] = self.layers[i + 1].backward(delta[i + 1])
+            delta[i] = self.layers[i + 1].backward(delta[i + 1],self.gamma)
         
-        self.layers[0].backward(delta[0])
+        self.layers[0].backward(delta[0],self.gamma)
         
         # Update weights
         for i in range(0, len(self.layers), 2):
             # w = [fan_in, fan_out] => x = [n, fan_in], delta = [n, fan_out], alpha = [1] => x.T @ delta * alpha
-            self.layers[i].w = self.layers[i].w - self.alpha * self.layers[i].d_w / self.batch_size
+            self.layers[i].w = self.layers[i].w - self.alpha * self.layers[i].d_w / self.batch_size - self.L2_penalty * self.layers[i].w
             # a = w_0 * b + w_1 * x1 ...
             # b = [n, fan_out] => delta = [n, fan_out]
-            self.layers[i].b = self.layers[i].b - self.alpha * self.layers[i].d_b
+            self.layers[i].b = self.layers[i].b - self.alpha * self.layers[i].d_b - self.L2_penalty * self.layers[i].b
 
     def loss(self, logits, targets):
         """
