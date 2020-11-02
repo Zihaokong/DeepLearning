@@ -164,11 +164,10 @@ class Layer:
         # where the gradient is - \frac{\partial E}{\partial a_j} \frac{a_j}{\partial w_{ij}}
         self.d_w = -1 * (self.x.T @ delta)
 
-        # derivative of bias is 1
-        self.d_b = np.ones((1, len(self.x))) @ delta
+        # derivative of bias
+        self.d_b = -1 * np.ones((1, len(self.x))) @ delta
 
         # derivative of input is the weighted sum of input of delta j and w_j
-        # delta is row major, change to column major first
         self.d_x = (self.w @ delta.T).T
 
         # propogate partial X to calculate last layer's delta
@@ -194,7 +193,7 @@ class NeuralNetwork:
         self.y = None  # Save the output vector of model in this
         self.targets = None  # Save the targets in forward in this variable
         self.alpha = config['learning_rate'] # Save the learning rate from config
-        self.batch_size = config['batch_size'] #
+        self.batch_size = config['batch_size'] # Save the batch size from config
 
         # Add layers specified by layer_specs.
         for i in range(len(config['layer_specs']) - 1):
@@ -255,13 +254,15 @@ class NeuralNetwork:
             # Evaluate the delta term
             delta[i] = self.layers[i + 1].backward(delta[i + 1])
         
+        self.layers[0].backward(delta[0])
+        
         # Update weights
         for i in range(0, len(self.layers), 2):
             # w = [fan_in, fan_out] => x = [n, fan_in], delta = [n, fan_out], alpha = [1] => x.T @ delta * alpha
-            self.layers[i].w = self.layers[i].w + self.alpha * (self.layers[i].x.T @ delta[i]) / self.batch_size
+            self.layers[i].w = self.layers[i].w - self.alpha * self.layers[i].d_w / self.batch_size
             # a = w_0 * b + w_1 * x1 ...
             # b = [n, fan_out] => delta = [n, fan_out]
-            self.layers[i].b = self.layers[i].b + self.alpha * np.mean(delta[i], axis=0)
+            self.layers[i].b = self.layers[i].b - self.alpha * self.layers[i].d_b
 
     def loss(self, logits, targets):
         """
