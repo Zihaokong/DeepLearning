@@ -269,5 +269,5 @@ class NeuralNetwork:
         compute the categorical cross-entropy loss and return it.
         """
         y_ylog = targets * np.log(logits + 1e-8)
-        return -1 * np.sum(y_ylog) / len(targets)
+        return -1 * np.sum(y_ylog) / len(targets) # J = E + λC => J = E + 2λ|w|
 
