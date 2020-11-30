@@ -14,7 +14,22 @@ from constants import ROOT_STATS_DIR
 from dataset_factory import get_datasets
 from file_utils import *
 from model_factory import get_model
+import torch.nn as nn
 
+def generate_caption(vocab,captions):
+    string = ""
+    for word in captions:
+        string = string + vocab.idx2word[word.item()] + " "
+    print(string)
+
+
+def view_sent(output,vocab):
+    predicted = []
+    string = ""
+    for i in output:
+        wordidx = torch.argmax(i).item()
+        string += vocab.idx2word[wordidx] + " "
+    print(string)
 
 # Class to encapsulate a neural experiment.
 # The boilerplate code to setup the experiment, log stats, checkpoints and plotting have been provided to you.
@@ -29,10 +44,10 @@ class Experiment(object):
         self.__name = config_data['experiment_name']
         self.__experiment_dir = os.path.join(ROOT_STATS_DIR, self.__name)
 
-        # Load Datasets
-        self.__coco_test, self.__vocab, self.__train_loader, self.__val_loader, self.__test_loader = get_datasets(
+        # Load Datasets#########################################################################self.train_loader
+        self.coco_test, self.vocab, self.train_loader, self.__val_loader, self.__test_loader = get_datasets(
             config_data)
-
+        
         # Setup Experiment
         self.__generation_config = config_data['generation']
         self.__epochs = config_data['experiment']['num_epochs']
@@ -41,16 +56,21 @@ class Experiment(object):
         self.__val_losses = []
         self.__best_model = None  # Save your best model in this field and use this in test method.
 
-        # Init Model
-        self.__model = get_model(config_data, self.__vocab)
+        # Init Model#######################################################################self.model
+        self.model = get_model(config_data, self.vocab)
 
         # TODO: Set these Criterion and Optimizers Correctly
-        self.__criterion = None
-        self.__optimizer = None
-
+        self.__criterion = nn.CrossEntropyLoss()
+        self.__optimizer = torch.optim.Adam(self.model.parameters(), lr=config_data["experiment"]["learning_rate"])
+      
+#         self.criterion = nn.CrossEntropyLoss()
+#         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=config_data["experiment"]["learning_rate"])
+      
+        
+        
         self.__init_model()
 
-        # Load Experiment Data if available
+        # Load Experiment Data if available###################################################################
         self.__load_experiment()
 
     # Loads the experiment data if exists to resume training from last saved checkpoint.
@@ -63,7 +83,7 @@ class Experiment(object):
             self.__current_epoch = len(self.__training_losses)
 
             state_dict = torch.load(os.path.join(self.__experiment_dir, 'latest_model.pt'))
-            self.__model.load_state_dict(state_dict['model'])
+            self.model.load_state_dict(state_dict['model'])
             self.__optimizer.load_state_dict(state_dict['optimizer'])
 
         else:
@@ -71,42 +91,62 @@ class Experiment(object):
 
     def __init_model(self):
         if torch.cuda.is_available():
-            self.__model = self.__model.cuda().float()
+            self.model = self.model.cuda().float()
             self.__criterion = self.__criterion.cuda()
 
     # Main method to run your experiment. Should be self-explanatory.
     def run(self):
         start_epoch = self.__current_epoch
         for epoch in range(start_epoch, self.__epochs):  # loop over the dataset multiple times
+            print(epoch,"number epoch")
             start_time = datetime.now()
             self.__current_epoch = epoch
             train_loss = self.__train()
             val_loss = self.__val()
             self.__record_stats(train_loss, val_loss)
             self.__log_epoch_stats(start_time)
-            self.__save_model()
+            #####################################################################
+            #self.__save_model()
 
     # TODO: Perform one training iteration on the whole dataset and return loss value
     def __train(self):
-        self.__model.train()
+        self.model.train()
         training_loss = 0
-
-        for i, (images, captions, _) in enumerate(self.__train_loader):
-            raise NotImplementedError()
-
-        return training_loss
+        total_num = 0
+        
+        for i, (images, captions, _) in enumerate(self.train_loader):
+            images = images.to("cuda")
+            captions = captions.to("cuda")
+            self.__optimizer.zero_grad()
+            output = self.model(images,captions)
+            loss = self.__criterion(output.view(-1,len(self.vocab)),captions.view(-1))
+            training_loss+=loss         
+            loss.backward()
+            self.__optimizer.step()
+            total_num = i
+        return training_loss.item()/total_num
 
     # TODO: Perform one Pass on the validation set and return loss value. You may also update your best model here.
     def __val(self):
-        self.__model.eval()
+        self.model.eval()
         val_loss = 0
-
+        total_num = 0
         with torch.no_grad():
             for i, (images, captions, _) in enumerate(self.__val_loader):
-                raise NotImplementedError()
+                images = images.to("cuda")
+                captions = captions.to("cuda")
 
-        return val_loss
+                output = self.model(images,captions)
+                #generate_caption(self.vocab,captions[0])                
+#                 view_sent(output[0],self.vocab)
+                loss = self.__criterion(output.reshape(-1,len(self.vocab)),captions.reshape(-1))
+                val_loss+=loss
+                
+                total_num = i
+        return val_loss.item()/total_num
 
+
+       
     # TODO: Implement your test function here. Generate sample captions and evaluate loss and
     #  bleu scores using the best model. Use utility functions provided to you in caption_utils.
     #  Note than you'll need image_ids and COCO object in this case to fetch all captions to generate bleu scores.
@@ -129,7 +169,7 @@ class Experiment(object):
 
     def __save_model(self):
         root_model_path = os.path.join(self.__experiment_dir, 'latest_model.pt')
-        model_dict = self.__model.state_dict()
+        model_dict = self.model.state_dict()
         state_dict = {'model': model_dict, 'optimizer': self.__optimizer.state_dict()}
         torch.save(state_dict, root_model_path)
 

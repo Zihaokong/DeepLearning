@@ -34,7 +34,6 @@ def load_vocab(json, threshold):
         with open('savedVocab', 'rb') as savedVocab:
             vocab = pickle.load(savedVocab)
             print("Using the saved vocab.")
-
     else:
         vocab = build_vocab(json, threshold)
         with open('savedVocab', 'wb') as savedVocab:
