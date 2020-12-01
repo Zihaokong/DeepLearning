@@ -15,14 +15,20 @@ from dataset_factory import get_datasets
 from file_utils import *
 from model_factory import get_model
 import torch.nn as nn
+import copy
+from PIL import Image
+import nltk
+from pycocotools.coco import COCO
 
+
+# helper function, view caption from a list of index
 def generate_caption(vocab,captions):
     string = ""
     for word in captions:
         string = string + vocab.idx2word[word.item()] + " "
     print(string)
 
-
+# view caption from output
 def view_sent(output,vocab):
     predicted = []
     string = ""
@@ -38,13 +44,13 @@ def view_sent(output,vocab):
 class Experiment(object):
     def __init__(self, name):
         config_data = read_file_in_dir('./', name + '.json')
+        self.config = config_data
         if config_data is None:
             raise Exception("Configuration file doesn't exist: ", name)
 
         self.__name = config_data['experiment_name']
         self.__experiment_dir = os.path.join(ROOT_STATS_DIR, self.__name)
 
-        # Load Datasets#########################################################################self.train_loader
         self.coco_test, self.vocab, self.train_loader, self.__val_loader, self.__test_loader = get_datasets(
             config_data)
         
@@ -56,21 +62,17 @@ class Experiment(object):
         self.__val_losses = []
         self.__best_model = None  # Save your best model in this field and use this in test method.
 
-        # Init Model#######################################################################self.model
         self.model = get_model(config_data, self.vocab)
 
         # TODO: Set these Criterion and Optimizers Correctly
         self.__criterion = nn.CrossEntropyLoss()
         self.__optimizer = torch.optim.Adam(self.model.parameters(), lr=config_data["experiment"]["learning_rate"])
       
-#         self.criterion = nn.CrossEntropyLoss()
-#         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=config_data["experiment"]["learning_rate"])
-      
-        
+
         
         self.__init_model()
 
-        # Load Experiment Data if available###################################################################
+        # Load Experiment Data if available
         self.__load_experiment()
 
     # Loads the experiment data if exists to resume training from last saved checkpoint.
@@ -97,16 +99,21 @@ class Experiment(object):
     # Main method to run your experiment. Should be self-explanatory.
     def run(self):
         start_epoch = self.__current_epoch
+        self.lowest_val_loss = 99999999
         for epoch in range(start_epoch, self.__epochs):  # loop over the dataset multiple times
             print(epoch,"number epoch")
             start_time = datetime.now()
             self.__current_epoch = epoch
             train_loss = self.__train()
             val_loss = self.__val()
+            if val_loss < self.lowest_val_loss:
+                self.lowest_val_loss = val_loss
+                print("best model")
+                self.__best_model = copy.deepcopy(self.model.cpu())
+                self.model.to("cuda")
             self.__record_stats(train_loss, val_loss)
             self.__log_epoch_stats(start_time)
-            #####################################################################
-            #self.__save_model()
+            self.__save_model()
 
     # TODO: Perform one training iteration on the whole dataset and return loss value
     def __train(self):
@@ -115,30 +122,38 @@ class Experiment(object):
         total_num = 0
         
         for i, (images, captions, _) in enumerate(self.train_loader):
+            # send input to GPU
             images = images.to("cuda")
             captions = captions.to("cuda")
+            
+            # train model
             self.__optimizer.zero_grad()
             output = self.model(images,captions)
             loss = self.__criterion(output.view(-1,len(self.vocab)),captions.view(-1))
+            # calculate one pass loss 
             training_loss+=loss         
             loss.backward()
             self.__optimizer.step()
             total_num = i
+            
+            if i % 200 == 0:
+                print("train loss: ", loss.item())
+        # average one pass loss
         return training_loss.item()/total_num
 
     # TODO: Perform one Pass on the validation set and return loss value. You may also update your best model here.
     def __val(self):
         self.model.eval()
+        self.model.to("cuda")
         val_loss = 0
         total_num = 0
         with torch.no_grad():
+            # calculate validation loss 
             for i, (images, captions, _) in enumerate(self.__val_loader):
                 images = images.to("cuda")
                 captions = captions.to("cuda")
 
                 output = self.model(images,captions)
-                #generate_caption(self.vocab,captions[0])                
-#                 view_sent(output[0],self.vocab)
                 loss = self.__criterion(output.reshape(-1,len(self.vocab)),captions.reshape(-1))
                 val_loss+=loss
                 
@@ -150,22 +165,70 @@ class Experiment(object):
     # TODO: Implement your test function here. Generate sample captions and evaluate loss and
     #  bleu scores using the best model. Use utility functions provided to you in caption_utils.
     #  Note than you'll need image_ids and COCO object in this case to fetch all captions to generate bleu scores.
+    
+    
     def test(self):
-        self.__model.eval()
+        self.__best_model.eval()
+        self.__best_model.to("cuda")
         test_loss = 0
-        bleu1 = 0
-        bleu4 = 0
-
+        bleu1_score = 0
+        bleu4_score = 0
+        total_num = 0
+   
         with torch.no_grad():
             for iter, (images, captions, img_ids) in enumerate(self.__test_loader):
-                raise NotImplementedError()
-
-        result_str = "Test Performance: Loss: {}, Perplexity: {}, Bleu1: {}, Bleu4: {}".format(test_loss,
-                                                                                               bleu1,
-                                                                                               bleu4)
+                images = images.to("cuda")
+                captions = captions.to("cuda")
+                self.__best_model = self.__best_model.to("cuda")
+                # calculate test set loss using teacher forcing  
+                output = self.__best_model(images,captions)
+                loss = self.__criterion(output.reshape(-1,len(self.vocab)),captions.reshape(-1))
+                test_loss += loss
+                total_num = iter
+                
+                # generate captions for a minibatch
+                predicted = self.__best_model.generate(images,self.vocab,self.config["generation"]["temperature"],self.config["generation"]["max_length"])
+                # total batch bleu1 and bleu4 score
+                batch_bleu1 = 0
+                batch_bleu4 = 0
+                # generate every picture's reference captions
+                for i in range(len(images)):
+                    # reference
+                    captions = []
+                    image = images[i]
+                    img_id = img_ids[i]
+                    # using unique image id, extract 5 different references captions from coco test set
+                    for j in range(5):
+                        cap = self.coco_test.imgToAnns[img_id][j]['caption']
+                        tokens = nltk.tokenize.word_tokenize(str(cap).lower())
+                        captions.append(tokens)
+                    
+                    # extract the self generated caption from a batch of predictions
+                    # and get rid of <start> <end> <unknown> and <pad>
+                    captions_self = []
+                    for word in predicted:
+                        if word[i] >=0 and word[i] <= 3:
+                            continue
+                        captions_self.append(self.vocab.idx2word[word[i].item()])
+                    
+                    # calculate for every picture its bleu scores
+                    batch_bleu1 += bleu1(captions, captions_self)
+                    batch_bleu4 += bleu4(captions, captions_self)
+                
+                # calculate for every batch it's bleu scores        
+                batch_bleu1 /= self.config["dataset"]['batch_size']
+                batch_bleu4 /= self.config["dataset"]['batch_size']
+                print("batch: ",iter,"bleu1 score is ",batch_bleu1,"bleu4 score is ",batch_bleu4, "loss is ",loss)
+                bleu1_score += batch_bleu1
+                bleu4_score += batch_bleu4
+        # calculate total bleu score        
+        bleu1_score /= len(self.__test_loader)
+        bleu4_score /= len(self.__test_loader)
+        test_loss = test_loss.item()/total_num
+        result_str = "Test Performance: Loss: {}, Bleu1: {}, Bleu4: {}".format(test_loss,bleu1_score,bleu4_score)
         self.__log(result_str)
 
-        return test_loss, bleu1, bleu4
+        return test_loss, bleu1_score, bleu4_score
 
     def __save_model(self):
         root_model_path = os.path.join(self.__experiment_dir, 'latest_model.pt')
