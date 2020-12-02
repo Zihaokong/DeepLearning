@@ -1,0 +1,10 @@
+
+Model Vanilla 
+
+batchsize 64 img size 256
+epoch 15
+learning rate 1e-4
+maxlength 30
+
+embedding 2048
+hidden 1024
