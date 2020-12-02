@@ -26,7 +26,7 @@ def generate_caption(vocab,captions):
     string = ""
     for word in captions:
         string = string + vocab.idx2word[word.item()] + " "
-    print(string)
+    return string
 
 # view caption from output
 def view_sent(output,vocab):
@@ -168,6 +168,8 @@ class Experiment(object):
     
     
     def test(self):
+        if self.__best_model is None:
+            self.__best_model = copy.deepcopy(self.model.cpu())
         self.__best_model.eval()
         self.__best_model.to("cuda")
         test_loss = 0
@@ -175,6 +177,8 @@ class Experiment(object):
         bleu4_score = 0
         total_num = 0
    
+        write_file = ""
+
         with torch.no_grad():
             for iter, (images, captions, img_ids) in enumerate(self.__test_loader):
                 images = images.to("cuda")
@@ -186,11 +190,16 @@ class Experiment(object):
                 test_loss += loss
                 total_num = iter
                 
+                
                 # generate captions for a minibatch
-                predicted = self.__best_model.generate(images,self.vocab,self.config["generation"]["temperature"],self.config["generation"]["max_length"])
+
+                predicted = self.__best_model.generate(images,self.vocab,self.config["generation"]["temperature"],self.config["generation"]["max_length"],self.config["generation"]["deterministic"])
                 # total batch bleu1 and bleu4 score
                 batch_bleu1 = 0
                 batch_bleu4 = 0
+                
+                
+                
                 # generate every picture's reference captions
                 for i in range(len(images)):
                     # reference
@@ -212,9 +221,16 @@ class Experiment(object):
                         captions_self.append(self.vocab.idx2word[word[i].item()])
                     
                     # calculate for every picture its bleu scores
-                    batch_bleu1 += bleu1(captions, captions_self)
-                    batch_bleu4 += bleu4(captions, captions_self)
-                
+                    
+
+                    bleu1pic = bleu1(captions, captions_self)
+                    bleu4pic = bleu4(captions, captions_self)
+                    if i == 1 or i == 30:
+                        write_file += "self {} filename {} ref {}, bleu1 [{}], bleu4 [{}]".format(captions_self, self.coco_test.loadImgs(img_id)[0]['file_name'],captions[0],bleu1pic, bleu4pic)+"\n"                   
+                    
+                    batch_bleu1 += bleu1pic
+                    batch_bleu4 += bleu4pic
+                    
                 # calculate for every batch it's bleu scores        
                 batch_bleu1 /= self.config["dataset"]['batch_size']
                 batch_bleu4 /= self.config["dataset"]['batch_size']
@@ -227,6 +243,11 @@ class Experiment(object):
         test_loss = test_loss.item()/total_num
         result_str = "Test Performance: Loss: {}, Bleu1: {}, Bleu4: {}".format(test_loss,bleu1_score,bleu4_score)
         self.__log(result_str)
+        
+        
+        f = open("captions.txt", "a")
+        f.write(write_file)
+        f.close()
 
         return test_loss, bleu1_score, bleu4_score
 
