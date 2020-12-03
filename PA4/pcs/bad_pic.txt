@@ -1,0 +1,19 @@
+self ['a', 'pizza', 'with', 'a', 'slice', 'of', 'pizza', 'on', 'it', '.'] filename COCO_val2014_000000451683.jpg ref ['large', 'pizza', 'covered', 'in', 'pepperoni', ',', 'olives', ',', 'peppers', ',', 'onion', ',', 'and', 'mushrooms', '.'], bleu1 [90.0], bleu4 [1.4285714285714295]
+
+self ['a', 'person', 'on', 'a', 'snowboard', 'is', 'flying', 'a', 'kite', '.'] filename COCO_val2014_000000496409.jpg ref ['some', 'guy', 'that', 'is', 'skiing', 'down', 'a', 'hill', 'in', 'some', 'snow'], bleu1 [50.0], bleu4 [1.4285714285714295]
+
+self ['a', 'living', 'room', 'with', 'a', 'couch', ',', 'a', 'table', 'and', 'a', 'table'] filename COCO_val2014_000000441247.jpg ref ['a', 'woman', 'standing', 'in', 'a', 'kitchen', 'next', 'to', 'a', 'table', '.'], bleu1 [41.66666666666667], bleu4 [1.1111111111111112]
+
+self ['a', 'bed', 'with', 'a', 'bed', 'and', 'a', 'window', 'in', 'it', '.'] filename COCO_val2014_000000483050.jpg ref ['a', 'large', 'bed', 'with', 'two', 'lamps', 'on', 'either', 'side', 'lighting', 'the', 'room', '.'], bleu1 [72.72727272727273], bleu4 [1.2500000000000007]
+
+self ['a', 'man', 'is', 'sitting', 'on', 'a', 'chair', 'in', 'a', 'chair', '.'] filename COCO_val2014_000000453341.jpg ref ['the', 'living', 'room', 'in', 'a', 'house', 'with', 'many', 'figurines', 'on', 'the', 'shelf'], bleu1 [54.54545454545454], bleu4 [1.2500000000000007]
+
+self ['an', 'elephant', 'with', 'its', 'trunk', 'in', 'the', 'middle', 'of', 'a', 'field', '.'] filename COCO_val2014_000000133631.jpg ref ['the', 'old', ',', 'adult', 'elephant', 'stands', 'near', 'a', 'wire', 'fence', '.'], bleu1 [58.333333333333336], bleu4 [1.1111111111111112]
+
+self ['a', 'man', 'in', 'a', 'field', 'with', 'a', 'frisbee', 'in', 'his', 'mouth', '.'] filename COCO_val2014_000000577651.jpg ref ['a', 'person', 'riding', 'skis', 'on', 'a', 'grassy', 'field'], bleu1 [41.66666666666667], bleu4 [1.1111111111111112]
+
+self ['a', 'chocolate', 'cake', 'with', 'a', 'chocolate', 'chocolate', 'cake', '.'] filename COCO_val2014_000000176168.jpg ref ['a', 'close', 'up', 'of', 'a', 'bowl', 'with', 'wood', 'and', 'screws', 'inside'], bleu1 [44.44444444444444], bleu4 [1.666666666666667]
+
+self ['a', 'cow', 'is', 'standing', 'in', 'a', 'field', 'with', 'a', 'large', 'brown', 'cow', '.'] filename COCO_val2014_000000298656.jpg ref ['a', 'herd', 'of', 'sheep', 'standing', 'next', 'to', 'a', 'brown', 'cow', '.'], bleu1 [61.53846153846154], bleu4 [1.0000000000000004]
+
+self ['a', 'herd', 'of', 'cattle', 'walking', 'down', 'a', 'road', 'with', 'a', 'road', '.'] filename COCO_val2014_000000286253.jpg ref ['a', 'herd', 'of', 'cows', 'crossing', 'an', 'empty', 'road', '.'], bleu1 [58.333333333333336], bleu4 [1.1111111111111112]

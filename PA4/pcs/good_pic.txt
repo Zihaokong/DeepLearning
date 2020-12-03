@@ -1,0 +1,19 @@
+self ['a', 'clock', 'on', 'a', 'building', 'with', 'a', 'clock', 'on', 'it', '.'] filename COCO_val2014_000000170862.jpg ref ['a', 'round', 'window', 'showing', 'a', 'man', "'s", 'face', 'in', 'the', 'upper', 'corner', 'of', 'a', 'building', '.'], bleu1 [72.72727272727273], bleu4 [12.500000000000004]
+
+self ['a', 'table', 'with', 'a', 'plate', 'of', 'food', 'and', 'a', 'drink', '.'] filename COCO_val2014_000000056567.jpg ref ['a', 'dining', 'table', 'with', 'a', 'pasta', 'dish', 'and', 'pizza', 'in', 'a', 'restaurant', '.'], bleu1 [75.7957198250164], bleu4 [31.265734427819268]
+
+self ['a', 'group', 'of', 'people', 'standing', 'around', 'a', 'table', 'with', 'a', 'cake', '.'] filename COCO_val2014_000000175878.jpg ref ['four', 'people', 'standing', 'around', 'outside', 'behind', 'a', 'house', 'conversing', '.'], bleu1 [66.66666666666666], bleu4 [44.44444444444444]
+
+self ['a', 'pizza', 'sitting', 'on', 'a', 'table', 'with', 'a', 'pizza', 'on', 'it', '.'] filename COCO_val2014_000000375915.jpg ref ['pizza', 'on', 'a', 'tray', 'on', 'the', 'table', 'outside', 'next', 'to', 'plates', 'and', 'wine', 'glass'], bleu1 [83.33333333333334], bleu4 [33.33333333333333]
+
+self ['a', 'train', 'traveling', 'down', 'tracks', 'next', 'to', 'a', 'forest', '.'] filename COCO_val2014_000000286507.jpg ref ['a', 'long', 'red', 'train', 'traveling', 'through', 'snow', 'covered', 'country', 'side', '.'], bleu1 [90.0], bleu4 [14.285714285714285]
+
+self ['a', 'cat', 'sitting', 'on', 'a', 'bench', 'in', 'a', 'bathroom', '.'] filename COCO_val2014_000000028903.jpg ref ['a', 'cat', 'is', 'sitting', 'on', 'a', 'white', 'toilet', '.'], bleu1 [90.0], bleu4 [42.857142857142854]
+
+self ['a', 'small', 'bowl', 'of', 'fruit', 'on', 'a', 'table', '.'] filename COCO_val2014_000000465357.jpg ref ['the', 'apples', 'on', 'the', 'table', 'are', 'being', 'peeled', '.'], bleu1 [77.77777777777779], bleu4 [16.666666666666668]
+
+self ['a', 'baseball', 'player', 'is', 'swinging', 'a', 'bat', 'at', 'a', 'pitch', '.'] filename COCO_val2014_000000565570.jpg ref ['a', 'man', 'that', 'is', 'standing', 'on', 'a', 'basebal', 'lfield'], bleu1 [81.81818181818183], bleu4 [12.500000000000004]
+
+self ['a', 'motorcycle', 'parked', 'on', 'the', 'beach', 'next', 'to', 'a', 'boat', '.'] filename COCO_val2014_000000388619.jpg ref ['three', 'bikes', 'on', 'the', 'shore', 'while', 'people', 'talk', 'on', 'a', 'small', 'boat', '.'], bleu1 [90.9090909090909], bleu4 [12.500000000000004]
+
+self ['a', 'group', 'of', 'people', 'are', 'flying', 'kites', 'in', 'a', 'field', '.'] filename COCO_val2014_000000236599.jpg ref ['people', 'hold', 'flying', 'kites', 'in', 'the', 'air', 'by', 'the', 'water'], bleu1 [100.0], bleu4 [12.500000000000004]
