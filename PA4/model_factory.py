@@ -36,7 +36,8 @@ class LSTM_RNN(nn.Module):
         #decoder: word embedding layer, LSTM hidden layer and linear prediction layer
         self.embedding = nn.Embedding(vocab_size,embedding_size)
         
-        if model_type == "LSTM":
+        self.lstm = None
+        if model_type == "LSTM" or "RNN":
             print("model LSTM baseline")
             self.lstm = nn.LSTM(embedding_size,hidden_size,batch_first=True)
         elif model_type == "Vanilla":
